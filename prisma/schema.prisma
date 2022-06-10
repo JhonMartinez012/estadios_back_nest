@@ -6,25 +6,188 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model users{
-  id          Int       @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   name        String
   last_name   String
   phone       String
-  acerca      String    @db.Text
-  email       String
+  acerca      String      @db.Text
+  email       String      @unique
   password    String
   img         String
 
-  created_by  BigInt    @db.BigInt 
-  updated_by  BigInt    @db.BigInt 
-  deletes_by  BigInt    @db.BigInt 
-  
+  created_by  BigInt?     @db.BigInt
+  updated_by  BigInt?     @db.BigInt 
+  deleted_by  BigInt?     @db.BigInt 
+
+  created_at  DateTime    @default(now())
+  updated_at  DateTime?   @default(now())
+  deleted_at  DateTime?   @default(now())
+
+  created_by_user      grounds[]@relation("created_by_user")
+  updated_by_user      grounds[]  @relation("updated_by_user")
+  deleted_by_user      grounds[]  @relation("deleted_by_user")
+
+}
+
+model grounds{
+  id                Int       @id  @default(autoincrement())
+  ground_name       String
+  img               String
+
+  created_by_id     Int
+  created_by        users       @relation("created_by_user", fields: [created_by_id], references: [id])
+
+  updated_by_id     Int
+  updated_by        users?      @relation("updated_by_user", fields: [updated_by_id], references: [id])
+
+  deleted_by_id     Int?
+  deleted_by        users?      @relation("deleted_by_user", fields: [deleted_by_id],references: [id])
+
+  created_at  DateTime          @default(now())
+  updated_at  DateTime?         @default(now())
+  deleted_at  DateTime?         @default(now())
+
+  stadiums        stadiums[]
+}
 
 
+model countries{
+  id                Int           @id @default(autoincrement())
+  short_name        String  
+  name              String
+
+  created_by_id     Int
+  updated_by_id     Int
+  deleted_by_id     Int?
+
+  created_at        DateTime          @default(now())
+  updated_at        DateTime?         @default(now())
+  deleted_at        DateTime?         @default(now())
+
+  cities            cities[]          // relacion 1 a muchos inversa 
+
+}
+
+model cities{
+  id                Int             @id @default(autoincrement())
+  name              String
+
+  country           countries       @relation(fields: [country_id], references: [id]) // relacion 1 a muchos
+  country_id        Int
   
+  created_by_id     Int
+  updated_by_id     Int
+  deleted_by_id     Int?
+
+  created_at        DateTime          @default(now())
+  updated_at        DateTime?         @default(now())
+  deleted_at        DateTime?         @default(now())
+
+  stadiums          stadiums[]
+}
+
+model inactivity_reasons{
+  id                Int              @id  @default(autoincrement())
+  name_resason      String
+
+  created_by_id     Int
+  updated_by_id     Int
+  deleted_by_id     Int?
+
+  created_at        DateTime          @default(now())
+  updated_at        DateTime?         @default(now())
+  deleted_at        DateTime?         @default(now())
+
+
+  stadium_inactivity_reasons    stadium_inactivity_reasons[]
+}
+
+model stadiums{
+  id                Int               @id @default(autoincrement())
+  stadium_name      String
+  about_stadium     String            @db.Text
+  principal_img     String
+
+  ground            grounds           @relation(fields: [ground_id], references: [id]) // relacion 1 a muchos
+  ground_id         Int               
+  
+  cities            cities            @relation(fields: [city_id], references: [id])
+  city_id           Int
+
+
+  created_by_id     Int
+  updated_by_id     Int
+  deleted_by_id     Int?
+
+  created_at        DateTime          @default(now())
+  updated_at        DateTime?         @default(now())
+  deleted_at        DateTime?         @default(now())
+
+  grandstands      grandstands[]
+  images           images[]
+  stadium_inactivity_reasons  stadium_inactivity_reasons[]
+
+  
+}
+
+model grandstands{
+  id                Int               @id  @default(autoincrement())
+  grandstand        String
+  ability           String
+  ticket_value      Float
+
+  stadiums          stadiums          @relation(fields: [stadium_id], references: [id])
+  stadium_id        Int
+
+  created_by_id     Int
+  updated_by_id     Int
+  deleted_by_id     Int?
+
+  created_at        DateTime          @default(now())
+  updated_at        DateTime?         @default(now())
+  deleted_at        DateTime?         @default(now())
+
+
+}
+
+model images{
+  id              Int                @id  @default(autoincrement())
+  image_route     String 
+
+  stadiums        stadiums          @relation(fields: [stadium_id], references: [id])
+  stadium_id      Int
+
+  created_by_id     Int
+  updated_by_id     Int
+  deleted_by_id     Int?
+
+  created_at        DateTime          @default(now())
+  updated_at        DateTime?         @default(now())
+  deleted_at        DateTime?         @default(now())
+}
+
+model stadium_inactivity_reasons{
+  id                Int                   @id @default(autoincrement())
+
+  stadiums          stadiums              @relation(fields: [stadium_id], references: [id])
+  stadium_id        Int
+
+  inactivity_reasons  inactivity_reasons  @relation(fields: [inactivity_reason_id], references: [id])
+  inactivity_reason_id    Int
+
+  date              DateTime
+
+  created_by_id     Int
+  updated_by_id     Int
+  deleted_by_id     Int?
+
+  created_at        DateTime              @default(now())
+  updated_at        DateTime?             @default(now())
+  deleted_at        DateTime?             @default(now())
+
 }
